@@ -31,6 +31,8 @@ npm i -g aws-cdk
 ### Bootstrap the project on a selected account
 
 ```bash
+# Go to the cdk directory
+cd cdk/
 # Initial build
 npm run build
 # Initialize the environment
