@@ -9,7 +9,7 @@ export class CdkStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const dataLakeRole = new iam.Role(this, 'GlueStudioPrepRole', {
+    const dataLakeRole = new iam.Role(this, 'GlueStudioPrepServiceRole', {
       roleName: 'GlueStudioDataLakeServiceLinkedRole',
       assumedBy:  new iam.CompositePrincipal(
         new iam.ServicePrincipal('glue.amazonaws.com'),
@@ -21,7 +21,7 @@ export class CdkStack extends cdk.Stack {
         iam.ManagedPolicy.fromAwsManagedPolicyName('AWSLakeFormationDataAdmin'),
         iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSageMakerFullAccess')
       ],
-      path: '/service-role'
+      path: '/service-role/'
     });
 
     dataLakeRole.addToPolicy(new iam.PolicyStatement({

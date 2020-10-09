@@ -58,6 +58,10 @@ Deploy the demo
 cdk deploy
 ```
 
+## Running the Notebook
+
+Log into the AWS console ensuring you are in the region you executed the CloudFormation template. From the Service menu at the top find `Amazon SageMaker` under the `Machine Learning` section. On the `Amazon SageMaker` left hand menu click the `Notebook Instances` link and find the `GlueStudioPrepNotebook` notebook instance and click the `Open JuypterLab` link. Find the `glue-studio-taxi-demo.ipynb` notebook and follow the instructions in the notebook to complete the demo.
+
 ## Other commands
 
 * `npm run build`   compile typescript to js
