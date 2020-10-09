@@ -20,7 +20,8 @@ export class CdkStack extends cdk.Stack {
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole'),
         iam.ManagedPolicy.fromAwsManagedPolicyName('AWSLakeFormationDataAdmin'),
         iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSageMakerFullAccess')
-      ]
+      ],
+      path: '/service-role'
     });
 
     dataLakeRole.addToPolicy(new iam.PolicyStatement({
@@ -69,7 +70,22 @@ export class CdkStack extends cdk.Stack {
       databaseName: 'taxi_demo'
     });
 
+    new lf.CfnPermissions(this, 'DatabasePermission', {
+      resource: {
+        databaseResource: {
+          name: db.databaseName
+        }
+      },
+      dataLakePrincipal: {
+        dataLakePrincipalIdentifier: dataLakeRole.roleArn
+      },
+      permissions: ['ALL']
+    });
+
+    let crawler_name = 'GlueStudioTaxiDemoCrawler';
+
     const datalakeCrawler = new glue.CfnCrawler(this, 'DataLakeCrawler', {
+      name: crawler_name,
       role: dataLakeRole.roleArn,
       databaseName: db.databaseName,
       targets: {
@@ -93,7 +109,7 @@ export class CdkStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'TaxiDataCrawler', {
-      value: db.databaseName,
+      value: crawler_name,
     });
 
     new cdk.CfnOutput(this, 'DataLakeBucketName', {
