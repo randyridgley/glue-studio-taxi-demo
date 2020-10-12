@@ -16,8 +16,7 @@ export class CdkStack extends cdk.Stack {
       ),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole'),
-        iam.ManagedPolicy.fromAwsManagedPolicyName('AWSLakeFormationDataAdmin'),
-        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSageMakerFullAccess')
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AWSLakeFormationDataAdmin')
       ],
       path: '/service-role/'
     });
