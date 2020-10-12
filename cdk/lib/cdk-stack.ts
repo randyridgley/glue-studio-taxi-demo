@@ -29,7 +29,26 @@ export class CdkStack extends cdk.Stack {
       resources: ['*']
     }));
 
-    dataLakeServiceRole.addToPolicy(new iam.PolicyStatement({
+    const sagemakerServiceRole = new iam.Role(this, 'AWSSagemakerNotebookServiceRole', {
+      roleName: 'AWSServiceSageMaker-StudioTaxi',
+      assumedBy:  new iam.CompositePrincipal(
+        new iam.ServicePrincipal('sagemaker.amazonaws.com')
+      ),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSageMakerFullAccess')
+      ],
+      path: '/service-role/'
+    });
+
+    sagemakerServiceRole.addToPolicy(new iam.PolicyStatement({
+      actions: [
+        'lakeformation:GetDataAccess'
+      ],
+      resources: ['*']
+    }));
+
+    sagemakerServiceRole.addToPolicy(new iam.PolicyStatement({
       actions: [
         "cloudformation:DescribeStacks"
       ],
@@ -37,12 +56,12 @@ export class CdkStack extends cdk.Stack {
     }));
 
 
-
     const dataLakeBucket = new s3.Bucket(this, "DataLakeBucket", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     dataLakeBucket.grantReadWrite(dataLakeServiceRole);
+    dataLakeBucket.grantReadWrite(sagemakerServiceRole);
 
     // LakeFormation Resource registration and permissions
     const dlsResource = new lf.CfnResource(this, 'dataLakeBucketLakeFormationResourceService', {
@@ -82,6 +101,18 @@ export class CdkStack extends cdk.Stack {
       permissions: ['ALL']
     });
 
+    new lf.CfnPermissions(this, 'DatabasePermissionServiceRole', {
+      resource: {
+        databaseResource: {
+          name: db.databaseName
+        }
+      },
+      dataLakePrincipal: {
+        dataLakePrincipalIdentifier: sagemakerServiceRole.roleArn
+      },
+      permissions: ['DESCRIBE']
+    });
+
     let crawler_name = 'GlueStudioTaxiDemoCrawler';
 
     const datalakeCrawler = new glue.CfnCrawler(this, 'DataLakeCrawler', {
@@ -100,7 +131,7 @@ export class CdkStack extends cdk.Stack {
     const notebook = new sagemaker.CfnNotebookInstance(this, 'GlueStudioPrepNotebook', {
       notebookInstanceName: "GlueStudioPrepNotebook",
       defaultCodeRepository: 'https://github.com/randyridgley/glue-studio-taxi-demo',
-      roleArn: dataLakeServiceRole.roleArn,
+      roleArn: sagemakerServiceRole.roleArn,
       instanceType: 'ml.t2.medium'
     });
 
@@ -118,6 +149,10 @@ export class CdkStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'DataLakeRoleArn', {
       value: dataLakeServiceRole.roleArn,
+    });
+
+    new cdk.CfnOutput(this, 'SagemakerRoleArn', {
+      value: sagemakerServiceRole.roleArn,
     });
 
     new cdk.CfnOutput(this, 'SageMakerNotebook', {
