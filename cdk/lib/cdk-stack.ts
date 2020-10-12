@@ -100,7 +100,7 @@ export class CdkStack extends cdk.Stack {
       permissions: ['ALL']
     });
 
-    new lf.CfnPermissions(this, 'DatabasePermissionServiceRole', {
+    new lf.CfnPermissions(this, 'DatabasePermissionSagemakerServiceRole', {
       resource: {
         databaseResource: {
           name: db.databaseName
@@ -109,7 +109,7 @@ export class CdkStack extends cdk.Stack {
       dataLakePrincipal: {
         dataLakePrincipalIdentifier: sagemakerServiceRole.roleArn
       },
-      permissions: ['DESCRIBE']
+      permissions: ['DESCRIBE', 'ALL_TABLES']
     });
 
     let crawler_name = 'GlueStudioTaxiDemoCrawler';
