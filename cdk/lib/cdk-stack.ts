@@ -9,12 +9,10 @@ export class CdkStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const dataLakeRole = new iam.Role(this, 'GlueStudioPrepServiceRole', {
-      roleName: 'GlueStudioDataLakeServiceLinkedRole',
+    const dataLakeServiceRole = new iam.Role(this, 'AWSGlueStudioPrepServiceRole', {
+      roleName: 'AWSGlueServiceRole-StudioTaxi',
       assumedBy:  new iam.CompositePrincipal(
-        new iam.ServicePrincipal('glue.amazonaws.com'),
-        new iam.ServicePrincipal('lakeformation.amazonaws.com'),
-        new iam.ServicePrincipal('sagemaker.amazonaws.com'),
+        new iam.ServicePrincipal('glue.amazonaws.com')
       ),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole'),
@@ -24,36 +22,38 @@ export class CdkStack extends cdk.Stack {
       path: '/service-role/'
     });
 
-    dataLakeRole.addToPolicy(new iam.PolicyStatement({
+    dataLakeServiceRole.addToPolicy(new iam.PolicyStatement({
       actions: [
         'lakeformation:GetDataAccess'
       ],
       resources: ['*']
     }));
 
-    dataLakeRole.addToPolicy(new iam.PolicyStatement({
+    dataLakeServiceRole.addToPolicy(new iam.PolicyStatement({
       actions: [
         "cloudformation:DescribeStacks"
       ],
       resources: ['*']
     }));
 
+
+
     const dataLakeBucket = new s3.Bucket(this, "DataLakeBucket", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    dataLakeBucket.grantReadWrite(dataLakeRole);
+    dataLakeBucket.grantReadWrite(dataLakeServiceRole);
 
     // LakeFormation Resource registration and permissions
-    const dlResource = new lf.CfnResource(this, 'dataLakeBucketLakeFormationResource', {
+    const dlsResource = new lf.CfnResource(this, 'dataLakeBucketLakeFormationResourceService', {
       resourceArn: dataLakeBucket.bucketArn,
-      roleArn: dataLakeRole.roleArn,
+      roleArn: dataLakeServiceRole.roleArn,
       useServiceLinkedRole: false
     });
 
-    const dlPermission = new lf.CfnPermissions(this, 'DataLakeLocationPermission', {
+    const dlsPermission = new lf.CfnPermissions(this, 'DataLakeLocationPermissionService', {
       dataLakePrincipal: {
-        dataLakePrincipalIdentifier: dataLakeRole.roleArn,
+        dataLakePrincipalIdentifier: dataLakeServiceRole.roleArn,
       },
       resource: {
         dataLocationResource: {
@@ -64,20 +64,20 @@ export class CdkStack extends cdk.Stack {
         'DATA_LOCATION_ACCESS'
       ]
     });
-    dlPermission.node.addDependency(dlResource)
+    dlsPermission.node.addDependency(dlsResource)
 
     const db = new glue.Database(this, 'TaxiGlueStudioDatabase', {
       databaseName: 'taxi_demo'
     });
 
-    new lf.CfnPermissions(this, 'DatabasePermission', {
+    new lf.CfnPermissions(this, 'DatabasePermissionServiceRole', {
       resource: {
         databaseResource: {
           name: db.databaseName
         }
       },
       dataLakePrincipal: {
-        dataLakePrincipalIdentifier: dataLakeRole.roleArn
+        dataLakePrincipalIdentifier: dataLakeServiceRole.roleArn
       },
       permissions: ['ALL']
     });
@@ -86,7 +86,7 @@ export class CdkStack extends cdk.Stack {
 
     const datalakeCrawler = new glue.CfnCrawler(this, 'DataLakeCrawler', {
       name: crawler_name,
-      role: dataLakeRole.roleArn,
+      role: dataLakeServiceRole.roleArn,
       databaseName: db.databaseName,
       targets: {
         s3Targets: [
@@ -100,7 +100,7 @@ export class CdkStack extends cdk.Stack {
     const notebook = new sagemaker.CfnNotebookInstance(this, 'GlueStudioPrepNotebook', {
       notebookInstanceName: "GlueStudioPrepNotebook",
       defaultCodeRepository: 'https://github.com/randyridgley/glue-studio-taxi-demo',
-      roleArn: dataLakeRole.roleArn,
+      roleArn: dataLakeServiceRole.roleArn,
       instanceType: 'ml.t2.medium'
     });
 
@@ -117,7 +117,7 @@ export class CdkStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'DataLakeRoleArn', {
-      value: dataLakeRole.roleArn,
+      value: dataLakeServiceRole.roleArn,
     });
 
     new cdk.CfnOutput(this, 'SageMakerNotebook', {
