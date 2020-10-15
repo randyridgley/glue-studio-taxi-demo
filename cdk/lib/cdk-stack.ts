@@ -84,8 +84,23 @@ export class CdkStack extends cdk.Stack {
     });
     dlsPermission.node.addDependency(dlsResource)
 
+    const dlSagePermission = new lf.CfnPermissions(this, 'DataLakeLocationPermissionSagemakerService', {
+      dataLakePrincipal: {
+        dataLakePrincipalIdentifier: sagemakerServiceRole.roleArn,
+      },
+      resource: {
+        dataLocationResource: {
+          s3Resource: dataLakeBucket.bucketArn
+        }
+      },
+      permissions: [
+        'DATA_LOCATION_ACCESS'
+      ]
+    });
+    dlsPermission.node.addDependency(dlsResource)
+
     const db = new glue.Database(this, 'TaxiGlueStudioDatabase', {
-      databaseName: 'taxi_demo'
+      databaseName: 'taxi_studio_demo'
     });
 
     new lf.CfnPermissions(this, 'DatabasePermissionServiceRole', {
