@@ -109,7 +109,7 @@ export class CdkStack extends cdk.Stack {
       dataLakePrincipal: {
         dataLakePrincipalIdentifier: sagemakerServiceRole.roleArn
       },
-      permissions: ['DESCRIBE', 'ALL_TABLES']
+      permissions: ['ALL']
     });
 
     let crawler_name = 'GlueStudioTaxiDemoCrawler';
