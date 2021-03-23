@@ -28,6 +28,10 @@ brew install node awscli
 npm i -g aws-cdk
 ```
 
+### Lake Formation Permissions
+
+Permissions as the Lake Formation Admin and Database Creator are needed before you can run the cdk script. This is due to the fact that the script creates a Glue database and provides the required permissions for the IAM Role for the Glue job and the SageMaker notebook to have permissions needed to access data in the data lake.
+
 ### Bootstrap the project on a selected account
 
 ```bash
@@ -38,6 +42,7 @@ npm run build
 # Initialize the environment
 cdk bootstrap aws://account-id/region
 ```
+
 ## Initial deployment
 
 Check that the stack builds.
@@ -55,7 +60,7 @@ cdk bootstrap aws://<account>/us-east-1
 Deploy the demo
 
 ```bash
-cdk deploy
+cdk deploy '*'
 ```
 
 ## Running the Notebook
